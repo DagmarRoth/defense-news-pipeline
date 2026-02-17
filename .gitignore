@@ -1,0 +1,20 @@
+# Environment variables
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.Python
+
+# IDE
+.vscode/
+.idea/
+
+# Data (optional - keep local, don't commit)
+data/.processed_guids.json
+data/.notification_state.json
+
+# Credentials (never commit sensitive files)
+credentials/
+*.json
