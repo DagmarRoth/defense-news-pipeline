@@ -11,10 +11,9 @@ import os
 import sys
 from datetime import datetime
 from pathlib import Path
-from dotenv import load_dotenv
 
-# Load environment variables
-load_dotenv()
+# Note: load_dotenv() removed - Railway provides environment variables directly
+# For local development, use: from dotenv import load_dotenv; load_dotenv()
 
 import scraper
 import analyzer
@@ -43,13 +42,14 @@ def validate_configuration():
     errors = []
 
     if not SLACK_WEBHOOK_URL:
-        errors.append("  ✗ SLACK_WEBHOOK_URL not set in .env")
+        errors.append("  ✗ SLACK_WEBHOOK_URL not set in environment variables")
 
     if not GOOGLE_SHEETS_SPREADSHEET_ID:
-        errors.append("  ✗ GOOGLE_SHEETS_SPREADSHEET_ID not set in .env")
+        errors.append("  ✗ GOOGLE_SHEETS_SPREADSHEET_ID not set in environment variables")
 
     if not Path(GOOGLE_CREDENTIALS_PATH).exists():
         errors.append(f"  ✗ Google credentials file not found: {GOOGLE_CREDENTIALS_PATH}")
+        errors.append("    (Upload to Railway Volumes → /app/credentials/)")
 
     if errors:
         print("\n" + "="*70)
@@ -57,7 +57,8 @@ def validate_configuration():
         print("="*70)
         for error in errors:
             print(error)
-        print("\nPlease check your .env file and provide the required credentials.")
+        print("\n→ For Railway: Check project Variables/Secrets")
+        print("→ For local: Create .env file with required variables")
         return False
 
     return True
