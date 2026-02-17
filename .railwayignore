@@ -1,0 +1,10 @@
+.DS_Store
+__pycache__
+*.pyc
+.git
+.gitignore
+data/
+.vscode/
+.idea/
+explore_dvidshub*.py
+README.md
