@@ -1,5 +1,4 @@
 #!/bin/bash
-set -e
 
 echo "Defense News Pipeline - Startup Script"
 echo "======================================="
@@ -9,32 +8,27 @@ echo "Creating data directory..."
 mkdir -p data
 mkdir -p credentials
 
-# Check for required environment variables
-echo "Checking environment variables..."
-if [ -z "$ANTHROPIC_API_KEY" ]; then
-    echo "ERROR: ANTHROPIC_API_KEY not set"
-    exit 1
-fi
-
-if [ -z "$SLACK_WEBHOOK_URL" ]; then
-    echo "ERROR: SLACK_WEBHOOK_URL not set"
-    exit 1
-fi
-
-if [ -z "$GOOGLE_SHEETS_SPREADSHEET_ID" ]; then
-    echo "ERROR: GOOGLE_SHEETS_SPREADSHEET_ID not set"
-    exit 1
-fi
-
-# Check for credentials file (will be mounted by Railway)
-if [ ! -f "credentials/google_service_account.json" ]; then
-    echo "WARNING: credentials/google_service_account.json not found"
-    echo "This file must be uploaded to Railway as a volume"
-fi
-
-echo "Environment check passed!"
-echo "Starting pipeline..."
+# Debug: Show what variables are available
+echo ""
+echo "Environment variables status:"
+echo "  ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:0:20}... (${#ANTHROPIC_API_KEY} chars)"
+echo "  SLACK_WEBHOOK_URL: ${SLACK_WEBHOOK_URL:0:50}..."
+echo "  GOOGLE_SHEETS_SPREADSHEET_ID: ${GOOGLE_SHEETS_SPREADSHEET_ID:0:20}..."
+echo "  SLACK_SCORE_THRESHOLD: ${SLACK_SCORE_THRESHOLD:-not set}"
+echo "  POLL_INTERVAL_SECONDS: ${POLL_INTERVAL_SECONDS:-not set}"
 echo ""
 
-# Run the pipeline
+# Check if credentials file exists
+if [ -f "credentials/google_service_account.json" ]; then
+    echo "✓ Google credentials file found"
+else
+    echo "⚠ Google credentials file not found (will fail when accessing Sheets)"
+fi
+
+echo ""
+echo "Starting pipeline..."
+echo "======================================="
+echo ""
+
+# Run the pipeline - don't exit on error, let Python handle it
 exec python3 pipeline.py
