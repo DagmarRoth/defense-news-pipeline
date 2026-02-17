@@ -98,11 +98,11 @@ def item_to_row(item: Dict[str, Any]) -> List[str]:
         item.get("analyzed_at", "")[:19],  # Timestamp without microseconds
         item.get("guid", ""),
         item.get("type", "").upper(),
-        item.get("title", "")[:500],  # Increased from 100 to 500
+        item.get("title", "")[:200],  # Full title
         str(analysis.get("score", "")),
         str(analysis.get("newsworthy", False)),
-        analysis.get("summary", "")[:2000],  # Increased from 150 to 2000
-        analysis.get("why", "")[:1000],  # Increased from 100 to 1000
+        analysis.get("summary", "")[:400],  # Key summary points
+        analysis.get("why", "")[:250],  # Brief explanation
         item.get("link", "")
     ]
 
