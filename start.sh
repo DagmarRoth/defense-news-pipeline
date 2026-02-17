@@ -10,12 +10,8 @@ mkdir -p credentials
 
 # Debug: Show what variables are available
 echo ""
-echo "Environment variables status:"
-echo "  ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:0:20}... (${#ANTHROPIC_API_KEY} chars)"
-echo "  SLACK_WEBHOOK_URL: ${SLACK_WEBHOOK_URL:0:50}..."
-echo "  GOOGLE_SHEETS_SPREADSHEET_ID: ${GOOGLE_SHEETS_SPREADSHEET_ID:0:20}..."
-echo "  SLACK_SCORE_THRESHOLD: ${SLACK_SCORE_THRESHOLD:-not set}"
-echo "  POLL_INTERVAL_SECONDS: ${POLL_INTERVAL_SECONDS:-not set}"
+echo "Checking Railway environment variables..."
+python3 debug_env.py
 echo ""
 
 # Check if credentials file exists

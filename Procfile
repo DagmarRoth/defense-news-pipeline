@@ -1,1 +1,1 @@
-worker: python3 pipeline.py
+worker: bash start.sh
