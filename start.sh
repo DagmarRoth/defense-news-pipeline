@@ -53,8 +53,8 @@ nohup python3 pipeline.py >> pipeline.log 2>&1 &
 # Give it a moment to start
 sleep 2
 
-# Verify it started
-if pgrep -f "python3 pipeline.py" > /dev/null; then
+# Verify it started (use ps instead of pgrep for better compatibility)
+if ps aux | grep -v grep | grep -q "python3 pipeline.py"; then
     echo "✓ Pipeline started successfully"
     echo "✓ Logs: pipeline.log"
     echo ""
