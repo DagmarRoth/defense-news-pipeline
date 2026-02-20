@@ -108,8 +108,21 @@ def main():
             print("="*70)
 
             try:
+                # Step 0: Check if topics are configured (helps avoid work during initial startup/build)
+                print("\n0️⃣  Loading active topics...")
+                topics = topic_manager.list_active_topics()
+
+                if not topics:
+                    print("  ⚠ No active topics configured yet.")
+                    print("  → Add topics via the web UI, then items will be monitored")
+                    print(f"  → Next check in {POLL_INTERVAL} seconds...")
+                    time.sleep(POLL_INTERVAL)
+                    continue
+
+                print(f"  ✓ Found {len(topics)} active topic(s)\n")
+
                 # Step 1: Scrape for new items
-                print("\n1️⃣  Scraping DVIDS for new items...")
+                print("1️⃣  Scraping DVIDS for new items...")
                 new_items = scraper.main()
 
                 if not new_items:
@@ -123,20 +136,8 @@ def main():
                 print("\n2️⃣  Analyzing items with Claude...")
                 analyzed_items = analyzer.analyze_all_items(new_items)
 
-                # Step 3: Load all active topics
-                print("\n3️⃣  Loading active topics...")
-                topics = topic_manager.list_active_topics()
-
-                if not topics:
-                    print("  ⚠ No active topics configured.")
-                    print("  → Add topics via the web UI (http://your-railway-url)")
-                    time.sleep(POLL_INTERVAL)
-                    continue
-
-                print(f"  ✓ Loaded {len(topics)} active topic(s)")
-
-                # Step 4: Process each topic
-                print("\n4️⃣  Processing topics...")
+                # Step 3: Process each topic
+                print("\n3️⃣  Processing topics...")
                 total_slack_sent = 0
                 total_sheets_logged = 0
 
