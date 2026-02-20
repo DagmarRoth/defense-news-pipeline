@@ -93,12 +93,6 @@ def main():
     print(f"✓ Loaded notification state\n")
 
     iteration = 0
-    startup_delay = int(os.getenv('STARTUP_DELAY_SECONDS', 60))
-
-    if startup_delay > 0:
-        print(f"Startup delay: waiting {startup_delay} seconds before first poll...")
-        print("(This allows Railway build validation to complete)")
-        time.sleep(startup_delay)
 
     try:
         while True:
