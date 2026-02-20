@@ -46,6 +46,17 @@ echo "Starting pipeline..."
 echo "======================================="
 echo ""
 
-# Run the pipeline with a 30-minute timeout to prevent hanging during builds
-# (timeout will be killed by Railway's container timeout if it runs too long)
-exec timeout 1800 python3 pipeline.py
+# Start pipeline in background with nohup so it continues even if shell exits
+# This allows the build to complete while the pipeline runs
+nohup timeout 1800 python3 pipeline.py > pipeline.log 2>&1 &
+PIPELINE_PID=$!
+
+echo "✓ Pipeline started (PID: $PIPELINE_PID)"
+echo "✓ Logs: pipeline.log"
+echo ""
+echo "Pipeline is running. Keeping container alive..."
+echo ""
+
+# Keep the container running by sleeping indefinitely
+# The background pipeline process will continue to run
+sleep infinity
