@@ -126,10 +126,10 @@ Description: {item['description']}
     except Exception as e:
         print(f"  ERROR analyzing item: {e}")
         return {
-            "newsworthy": False,
-            "score": 0,
-            "summary": "Analysis failed",
-            "why": str(e)
+            "newsworthy": True,
+            "score": 5,
+            "summary": "Could not analyze with Claude (API connection issue)",
+            "why": f"Analysis unavailable - falling back to keyword matching only. Error: {str(e)}"
         }
 
 
