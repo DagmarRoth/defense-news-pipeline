@@ -46,19 +46,6 @@ echo "Starting pipeline..."
 echo "======================================="
 echo ""
 
-# Start pipeline as a completely detached daemon
-# This allows the script to exit immediately while pipeline continues running
-nohup python3 pipeline.py >> pipeline.log 2>&1 &
-PIPELINE_PID=$!
-
-# Give it a moment to start
-sleep 2
-
-# Since ps/pgrep aren't available in minimal containers, just trust nohup worked
-echo "✓ Pipeline started (PID: $PIPELINE_PID)"
-echo "✓ Logs: pipeline.log"
-echo ""
-echo "Build complete. Pipeline is running in the background."
-
-# Exit immediately to allow build to complete
-exit 0
+# Start pipeline and pipe output to console so we can see errors
+# This allows us to debug startup issues
+exec python3 pipeline.py 2>&1
