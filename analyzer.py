@@ -127,7 +127,7 @@ Description: {item['description']}
         print(f"  ERROR analyzing item: {e}")
         return {
             "newsworthy": True,
-            "score": 5,
+            "score": 7,
             "summary": "Could not analyze with Claude (API connection issue)",
             "why": f"Analysis unavailable - falling back to keyword matching only. Error: {str(e)}"
         }
