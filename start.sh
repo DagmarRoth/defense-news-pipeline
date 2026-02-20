@@ -19,16 +19,33 @@ else
     echo "⚠ Google credentials not available (set GOOGLE_CREDENTIALS_BASE64 or upload file)"
 fi
 
-# Debug: Show what variables are available
+# Verify we have minimum required environment variables before starting
 echo ""
-echo "Checking Railway environment variables..."
-python3 debug_env.py
+echo "Verifying environment variables..."
+MISSING_VARS=""
+for var in GOOGLE_SHEETS_SPREADSHEET_ID ANTHROPIC_API_KEY; do
+    if [ -z "${!var}" ]; then
+        MISSING_VARS="$MISSING_VARS $var"
+    fi
+done
+
+if [ -n "$MISSING_VARS" ]; then
+    echo "⚠ ERROR: Missing required environment variables:$MISSING_VARS"
+    echo "Pipeline cannot start without these variables."
+    echo "Please set them in Railway environment variables and redeploy."
+    echo ""
+    echo "Keeping container alive for debugging..."
+    # Keep container running so we can check logs
+    tail -f /dev/null
+fi
+
+echo "✓ All required environment variables are set"
 echo ""
 
-echo ""
 echo "Starting pipeline..."
 echo "======================================="
 echo ""
 
-# Run the pipeline - don't exit on error, let Python handle it
-exec python3 pipeline.py
+# Run the pipeline with a 30-minute timeout to prevent hanging during builds
+# (timeout will be killed by Railway's container timeout if it runs too long)
+exec timeout 1800 python3 pipeline.py
