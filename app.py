@@ -23,8 +23,11 @@ if CREDS_BASE64:
         decoded = base64.b64decode(CREDS_BASE64)
         with open('credentials/google_service_account.json', 'wb') as f:
             f.write(decoded)
+        print("✓ Google credentials decoded successfully")
     except Exception as e:
         print(f"⚠ Warning: Could not decode Google credentials: {e}")
+else:
+    print("⚠ Warning: GOOGLE_CREDENTIALS_BASE64 environment variable not set")
 
 # Import our modules
 from topic_manager import (
