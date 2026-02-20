@@ -269,11 +269,16 @@ def update_topic(topic_id: str, **updates) -> Optional[Dict]:
             raise ValueError(f"Invalid update: {error}")
 
         # Update the row in Sheets
-        worksheet.update_values(f'A{topic_row_idx}:J{topic_row_idx}', [_topic_to_row(topic)])
+        row_data = _topic_to_row(topic)
+        print(f"  Updating row {topic_row_idx} with data: {row_data}")
+        worksheet.update_values(f'A{topic_row_idx}:J{topic_row_idx}', [row_data])
+        print(f"  ✓ Row updated successfully")
         return topic
 
     except Exception as e:
-        print(f"Error updating topic: {e}")
+        print(f"Error updating topic {topic_id}: {e}")
+        import traceback
+        traceback.print_exc()
         return None
 
 
@@ -287,8 +292,14 @@ def delete_topic(topic_id: str) -> bool:
     Returns:
         True if deleted, False if not found
     """
+    print(f"Deleting topic {topic_id}...")
     result = update_topic(topic_id, active=False)
-    return result is not None
+    if result:
+        print(f"✓ Topic '{result['name']}' marked as inactive")
+        return True
+    else:
+        print(f"✗ Failed to delete topic {topic_id}")
+        return False
 
 
 def list_active_topics() -> List[Dict]:
