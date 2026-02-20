@@ -157,3 +157,80 @@ def batch_append_items_to_sheet(worksheet: gspread.Worksheet, items: List[Dict[s
     except Exception as e:
         print(f"  ✗ Error batch logging to Sheets: {e}")
         return False
+
+
+# ============================================================================
+# NEW: Topic-Specific Worksheet Functions
+# ============================================================================
+
+def get_or_create_topic_worksheet(
+    client: gspread.Client,
+    spreadsheet_id: str,
+    worksheet_name: str
+) -> gspread.Worksheet:
+    """
+    Get or create a worksheet for a specific topic.
+
+    Args:
+        client: Authenticated gspread client
+        spreadsheet_id: Google Sheets spreadsheet ID
+        worksheet_name: Name of the worksheet to create/get
+
+    Returns:
+        Worksheet object for the topic
+
+    Raises:
+        Exception: If spreadsheet access fails
+    """
+    try:
+        spreadsheet = client.open_by_key(spreadsheet_id)
+
+        # Try to get existing worksheet
+        try:
+            worksheet = spreadsheet.worksheet(worksheet_name)
+            return worksheet
+        except gspread.exceptions.WorksheetNotFound:
+            # Create new worksheet with headers
+            worksheet = spreadsheet.add_worksheet(
+                title=worksheet_name,
+                rows=100,
+                cols=9
+            )
+
+            # Add headers
+            worksheet.append_row(SHEET_HEADERS)
+            print(f"✓ Created worksheet: {worksheet_name}")
+
+            return worksheet
+
+    except gspread.exceptions.SpreadsheetNotFound:
+        raise Exception(f"Spreadsheet not found: {spreadsheet_id}")
+
+    except Exception as e:
+        raise Exception(f"Failed to create topic worksheet '{worksheet_name}': {e}")
+
+
+def create_topic_sheet_on_add(client: gspread.Client, topic: Dict[str, Any]) -> bool:
+    """
+    Create a new worksheet for a topic immediately when user adds it.
+
+    This allows users to verify the sheet exists right away via the web UI.
+
+    Args:
+        client: Authenticated gspread client
+        topic: Topic dict with sheet_id and sheet_name
+
+    Returns:
+        True if successful, False otherwise
+    """
+    try:
+        get_or_create_topic_worksheet(
+            client,
+            topic['sheet_id'],
+            topic['sheet_name']
+        )
+        return True
+
+    except Exception as e:
+        print(f"✗ Error creating topic sheet: {e}")
+        return False

@@ -1,0 +1,130 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Topic - DVIDS Topic Manager{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-7">
+        <!-- Header -->
+        <div class="mb-5">
+            <h1 style="font-size: 2.2rem; margin-bottom: 0.5rem;">
+                <i class="fas fa-edit"></i> Edit Topic
+            </h1>
+            <p style="color: var(--text-secondary); margin: 0; font-size: 1.1rem;">
+                {{ topic.name }}
+            </p>
+        </div>
+
+        <!-- Form Card -->
+        <div class="card mb-4">
+            <div class="card-body" style="padding: 2.5rem;">
+                <form method="POST">
+                    <!-- Topic Name -->
+                    <div class="mb-4">
+                        <label for="name" class="form-label">
+                            <i class="fas fa-heading"></i> Topic Name
+                            <span style="color: #ef4444;">*</span>
+                        </label>
+                        <input type="text"
+                               class="form-control form-control-lg"
+                               id="name"
+                               name="name"
+                               value="{{ topic.name }}"
+                               required
+                               style="font-size: 1rem;">
+                    </div>
+
+                    <!-- Keywords -->
+                    <div class="mb-4">
+                        <label for="keywords" class="form-label">
+                            <i class="fas fa-tags"></i> Keywords
+                            <span style="color: #ef4444;">*</span>
+                        </label>
+                        <input type="text"
+                               class="form-control form-control-lg"
+                               id="keywords"
+                               name="keywords"
+                               value="{{ topic.keywords|join(', ') }}"
+                               required
+                               style="font-size: 1rem;">
+                    </div>
+
+                    <!-- Score Threshold -->
+                    <div class="mb-4">
+                        <label for="score_threshold" class="form-label">
+                            <i class="fas fa-sliders-h"></i> Alert Threshold
+                        </label>
+                        <div class="input-group input-group-lg">
+                            <input type="number"
+                                   class="form-control"
+                                   id="score_threshold"
+                                   name="score_threshold"
+                                   min="1"
+                                   max="10"
+                                   value="{{ topic.score_threshold }}"
+                                   style="font-size: 1rem;">
+                            <span class="input-group-text" style="background: var(--surface-light); border-color: var(--border);">
+                                / 10
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Slack Webhook -->
+                    <div class="mb-5">
+                        <label for="slack_webhook" class="form-label">
+                            <i class="fab fa-slack"></i> Slack Webhook (Optional)
+                        </label>
+                        <input type="url"
+                               class="form-control form-control-lg"
+                               id="slack_webhook"
+                               name="slack_webhook"
+                               value="{{ topic.slack_webhook or '' }}"
+                               style="font-size: 1rem;">
+                    </div>
+
+                    <!-- Buttons -->
+                    <div class="d-grid gap-3 d-md-flex">
+                        <a href="{{ url_for('index') }}" class="btn btn-outline-secondary btn-lg flex-grow-1">
+                            <i class="fas fa-times"></i> Cancel
+                        </a>
+                        <button type="submit" class="btn btn-primary btn-lg flex-grow-1">
+                            <i class="fas fa-check"></i> Save Changes
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Google Sheet Info -->
+        <div class="card mb-4" style="background: rgba(20, 184, 166, 0.05); border-color: var(--primary-light);">
+            <div class="card-body">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <h6 style="margin: 0; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; font-size: 0.85rem;">
+                            <i class="fas fa-sheet"></i> Google Sheet
+                        </h6>
+                        <p style="margin: 0.5rem 0 0 0; color: var(--text-primary); font-weight: 500;">
+                            {{ topic.sheet_name }}
+                        </p>
+                    </div>
+                    <a href="{{ topic.sheet_url }}"
+                       target="_blank"
+                       class="btn btn-outline-success btn-sm">
+                        <i class="fas fa-external-link-alt"></i> Open
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Delete Section -->
+        <form action="{{ url_for('delete_topic_route', topic_id=topic.id) }}" method="POST">
+            <button type="submit"
+                    class="btn btn-outline-danger btn-lg w-100"
+                    onclick="return confirm('Are you sure? The Google Sheet will not be deleted.');"
+                    style="padding: 0.8rem;">
+                <i class="fas fa-trash"></i> Delete This Topic
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}

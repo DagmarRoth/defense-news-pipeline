@@ -1,0 +1,175 @@
+{% extends "base.html" %}
+
+{% block title %}Topics - DVIDS Topic Manager{% endblock %}
+
+{% block content %}
+<!-- Header Section -->
+<div class="mb-5">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h1 style="font-size: 2.5rem; margin-bottom: 0.5rem;">
+                <i class="fas fa-chart-network"></i> Monitoring Topics
+            </h1>
+            <p style="color: var(--text-secondary); margin: 0; font-size: 1.1rem;">
+                Create and manage custom defense news monitoring topics
+            </p>
+        </div>
+        <a href="{{ url_for('add_topic_route') }}" class="btn btn-primary btn-lg" style="padding: 0.8rem 1.75rem; font-size: 1.1rem;">
+            <i class="fas fa-plus"></i> Add Topic
+        </a>
+    </div>
+</div>
+
+{% if topics %}
+<!-- Topics Grid -->
+<div class="row g-4 mb-5">
+    {% for topic in topics %}
+    <div class="col-md-6 col-lg-4">
+        <div class="card h-100">
+            <div class="card-body d-flex flex-column">
+                <!-- Header -->
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <h5 class="card-title mb-0" style="font-size: 1.35rem;">
+                            {{ topic.name }}
+                        </h5>
+                    </div>
+                    <p style="color: var(--text-secondary); font-size: 0.9rem; margin: 0;">
+                        <i class="fas fa-clock"></i> Created {{ topic.created_at[:10] }}
+                    </p>
+                </div>
+
+                <!-- Keywords -->
+                <div class="mb-3">
+                    <label style="color: var(--text-secondary); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600;">
+                        Keywords
+                    </label>
+                    <div class="mt-2 d-flex flex-wrap gap-2">
+                        {% for keyword in topic.keywords %}
+                        <span class="badge bg-info">
+                            <i class="fas fa-tag"></i> {{ keyword }}
+                        </span>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- Stats -->
+                <div class="row g-3 mb-3" style="font-size: 0.9rem;">
+                    <div class="col-6">
+                        <div style="background: rgba(20, 184, 166, 0.1); padding: 0.75rem; border-radius: 8px; text-align: center;">
+                            <div style="color: var(--primary-light); font-weight: 600;">{{ topic.score_threshold }}/10</div>
+                            <div style="color: var(--text-secondary); font-size: 0.75rem;">Alert Threshold</div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div style="background: rgba(20, 184, 166, 0.1); padding: 0.75rem; border-radius: 8px; text-align: center;">
+                            {% if topic.has_slack %}
+                            <div style="color: #22c55e; font-weight: 600;">
+                                <i class="fas fa-check"></i> Active
+                            </div>
+                            {% else %}
+                            <div style="color: #94a3b8; font-weight: 600;">
+                                <i class="fas fa-times"></i> Disabled
+                            </div>
+                            {% endif %}
+                            <div style="color: var(--text-secondary); font-size: 0.75rem;">Slack Alerts</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Actions -->
+                <div class="btn-group-custom mt-auto">
+                    <a href="{{ url_for('edit_topic_route', topic_id=topic.id) }}"
+                       class="btn btn-outline-secondary flex-grow-1"
+                       style="text-align: center;">
+                        <i class="fas fa-edit"></i> Edit
+                    </a>
+                    <a href="{{ topic.sheet_url }}"
+                       target="_blank"
+                       class="btn btn-outline-success flex-grow-1"
+                       style="text-align: center;">
+                        <i class="fas fa-sheet"></i> Sheet
+                    </a>
+                    <form action="{{ url_for('delete_topic_route', topic_id=topic.id) }}"
+                          method="POST"
+                          style="flex-grow: 1;">
+                        <button type="submit"
+                                class="btn btn-outline-danger w-100"
+                                onclick="return confirm('Delete this topic?');">
+                            <i class="fas fa-trash"></i> Delete
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+{% else %}
+<!-- Empty State -->
+<div class="text-center" style="padding: 4rem 2rem;">
+    <div style="margin-bottom: 2rem;">
+        <i class="fas fa-inbox" style="font-size: 4rem; color: var(--primary-light); opacity: 0.5;"></i>
+    </div>
+    <h2 style="font-size: 1.75rem; margin-bottom: 1rem;">No Topics Yet</h2>
+    <p style="color: var(--text-secondary); margin-bottom: 2rem; font-size: 1.1rem;">
+        Create your first monitoring topic to start tracking defense news
+    </p>
+    <a href="{{ url_for('add_topic_route') }}" class="btn btn-primary btn-lg">
+        <i class="fas fa-plus"></i> Create Your First Topic
+    </a>
+</div>
+{% endif %}
+
+<!-- Info Section -->
+<div class="card mt-5" style="background: rgba(20, 184, 166, 0.05); border-color: var(--primary-light);">
+    <div class="card-body">
+        <h5 class="card-title mb-3">
+            <i class="fas fa-lightbulb"></i> How It Works
+        </h5>
+        <div class="row g-4">
+            <div class="col-md-6">
+                <div class="mb-3">
+                    <div style="color: var(--primary-light); font-weight: 600; margin-bottom: 0.5rem;">
+                        1. Create Topics
+                    </div>
+                    <p style="color: var(--text-secondary); margin: 0; font-size: 0.95rem;">
+                        Define custom keywords to monitor (e.g., "nuclear weapons", "Iran")
+                    </p>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="mb-3">
+                    <div style="color: var(--primary-light); font-weight: 600; margin-bottom: 0.5rem;">
+                        2. Auto-Monitoring
+                    </div>
+                    <p style="color: var(--text-secondary); margin: 0; font-size: 0.95rem;">
+                        Pipeline checks DVIDS every 5 minutes automatically
+                    </p>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="mb-3">
+                    <div style="color: var(--primary-light); font-weight: 600; margin-bottom: 0.5rem;">
+                        3. Google Sheets
+                    </div>
+                    <p style="color: var(--text-secondary); margin: 0; font-size: 0.95rem;">
+                        Matching items logged to dedicated worksheets automatically
+                    </p>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="mb-3">
+                    <div style="color: var(--primary-light); font-weight: 600; margin-bottom: 0.5rem;">
+                        4. Slack Alerts
+                    </div>
+                    <p style="color: var(--text-secondary); margin: 0; font-size: 0.95rem;">
+                        Optional notifications for high-scoring items per topic
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

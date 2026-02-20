@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}DVIDS Topic Manager{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            --primary: #0f766e;
+            --primary-light: #14b8a6;
+            --primary-dark: #0d5a54;
+            --secondary: #0f172a;
+            --surface: #1a202c;
+            --surface-light: #2d3748;
+            --text-primary: #f0f9f7;
+            --text-secondary: #cbd5e0;
+            --border: #2d3748;
+        }
+
+        html, body {
+            height: 100%;
+        }
+
+        body {
+            background: linear-gradient(135deg, var(--secondary) 0%, #1a2f2a 100%);
+            color: var(--text-primary);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+            font-weight: 400;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Navigation */
+        .navbar {
+            background: linear-gradient(90deg, var(--primary) 0%, var(--primary-light) 100%);
+            box-shadow: 0 4px 20px rgba(15, 118, 110, 0.2);
+            border-bottom: 1px solid rgba(20, 184, 166, 0.1);
+            padding: 1.2rem 0;
+        }
+
+        .navbar-brand {
+            font-weight: 600;
+            font-size: 1.35rem;
+            letter-spacing: 0.5px;
+            color: white !important;
+        }
+
+        .navbar-brand i {
+            margin-right: 0.5rem;
+        }
+
+        /* Container */
+        .container {
+            max-width: 1200px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Cards */
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            overflow: hidden;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(20, 184, 166, 0.15);
+            border-color: var(--primary-light);
+        }
+
+        .card-body {
+            padding: 1.75rem;
+        }
+
+        /* Alerts */
+        .alert {
+            margin-top: 1.5rem;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            background: rgba(20, 184, 166, 0.05);
+            color: var(--text-primary);
+        }
+
+        .alert-success {
+            background: rgba(20, 184, 166, 0.1);
+            border-color: var(--primary-light);
+        }
+
+        .alert-danger {
+            background: rgba(239, 68, 68, 0.1);
+            border-color: #ef4444;
+        }
+
+        .alert-warning {
+            background: rgba(251, 146, 60, 0.1);
+            border-color: #fb923c;
+        }
+
+        .alert-info {
+            background: rgba(20, 184, 166, 0.1);
+            border-color: var(--primary-light);
+        }
+
+        /* Buttons */
+        .btn {
+            border-radius: 8px;
+            font-weight: 500;
+            padding: 0.625rem 1.25rem;
+            transition: all 0.3s ease;
+            border: none;
+        }
+
+        .btn-primary {
+            background: linear-gradient(90deg, var(--primary) 0%, var(--primary-light) 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(20, 184, 166, 0.3);
+            color: white;
+            background: linear-gradient(90deg, var(--primary-light) 0%, var(--primary) 100%);
+        }
+
+        .btn-outline-secondary {
+            color: var(--text-secondary);
+            border-color: var(--border);
+        }
+
+        .btn-outline-secondary:hover {
+            background: var(--surface-light);
+            border-color: var(--primary-light);
+            color: var(--primary-light);
+        }
+
+        .btn-outline-danger {
+            color: #ef4444;
+            border-color: var(--border);
+        }
+
+        .btn-outline-danger:hover {
+            background: rgba(239, 68, 68, 0.1);
+            border-color: #ef4444;
+        }
+
+        .btn-outline-success {
+            color: var(--primary-light);
+            border-color: var(--border);
+        }
+
+        .btn-outline-success:hover {
+            background: rgba(20, 184, 166, 0.1);
+            border-color: var(--primary-light);
+        }
+
+        /* Form Elements */
+        .form-control, .form-select {
+            background: var(--surface-light);
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+            border-radius: 8px;
+            padding: 0.75rem 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .form-control:focus, .form-select:focus {
+            background: var(--surface-light);
+            border-color: var(--primary-light);
+            color: var(--text-primary);
+            box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.1);
+        }
+
+        .form-label {
+            color: var(--text-primary);
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+        }
+
+        /* Typography */
+        h1, h2, h3, h4, h5, h6 {
+            font-weight: 600;
+            letter-spacing: -0.5px;
+        }
+
+        a {
+            color: var(--primary-light);
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+
+        a:hover {
+            color: #06d6a0;
+            text-decoration: underline;
+        }
+
+        /* Badge */
+        .badge {
+            padding: 0.5rem 0.75rem;
+            border-radius: 6px;
+            font-weight: 500;
+            font-size: 0.85rem;
+        }
+
+        .badge.bg-info {
+            background: rgba(20, 184, 166, 0.2) !important;
+            color: var(--primary-light);
+        }
+
+        .badge.bg-success {
+            background: rgba(34, 197, 94, 0.2) !important;
+            color: #22c55e;
+        }
+
+        .badge.bg-secondary {
+            background: rgba(148, 163, 184, 0.2) !important;
+            color: #94a3b8;
+        }
+
+        /* Footer */
+        footer {
+            margin-top: auto;
+            padding: 2rem 0;
+            border-top: 1px solid var(--border);
+            color: var(--text-secondary);
+        }
+
+        /* Button Group */
+        .btn-group-custom {
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+
+            .card-body {
+                padding: 1.25rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-dark">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <i class="fas fa-broadcast-tower"></i> DVIDS Topic Monitor
+            </a>
+        </div>
+    </nav>
+
+    <div class="container mt-5 mb-5">
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                        {{ message|safe }}
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <!-- Page Content -->
+        {% block content %}{% endblock %}
+    </div>
+
+    <footer class="text-center">
+        <small><i class="fas fa-shield-alt"></i> DVIDS Topic Monitor · Defense News Intelligence Pipeline</small>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

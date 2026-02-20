@@ -4,12 +4,13 @@ import requests
 from typing import Dict, Any
 
 
-def format_slack_message(item: Dict[str, Any]) -> Dict[str, str]:
+def format_slack_message(item: Dict[str, Any], topic_name: str = None) -> Dict[str, str]:
     """
     Format an analyzed news item into a Slack message.
 
     Args:
         item: Analyzed item with title, link, analysis (score, summary, why), etc.
+        topic_name: Optional topic name to include in the header
 
     Returns:
         Dictionary with 'text' key for Slack message
@@ -27,8 +28,14 @@ def format_slack_message(item: Dict[str, Any]) -> Dict[str, str]:
     summary_short = summary[:200]
     why_short = why[:150] + "..." if len(why) > 150 else why
 
+    # Build header with optional topic
+    if topic_name:
+        header = f"🚨 *{topic_name}* - High-Priority Alert ({item_type})"
+    else:
+        header = f"🚨 *High-Priority Defense News Alert* ({item_type})"
+
     # Format as plain text message
-    message_text = f"""🚨 *High-Priority Defense News Alert* ({item_type})
+    message_text = f"""{header}
 *Score:* {score}/10
 
 *Title:* {title_short}
@@ -58,19 +65,20 @@ def is_notification_worthy(item: Dict[str, Any], threshold: int = 6) -> bool:
     return score >= threshold
 
 
-def send_slack_notification(webhook_url: str, item: Dict[str, Any]) -> bool:
+def send_slack_notification(webhook_url: str, item: Dict[str, Any], topic_name: str = None) -> bool:
     """
     Send a notification to Slack via webhook.
 
     Args:
         webhook_url: Slack incoming webhook URL
         item: Analyzed news item to send
+        topic_name: Optional topic name to include in message
 
     Returns:
         True if successful, False otherwise
     """
     try:
-        message = format_slack_message(item)
+        message = format_slack_message(item, topic_name=topic_name)
         response = requests.post(webhook_url, json=message, timeout=10)
 
         if response.status_code == 200:

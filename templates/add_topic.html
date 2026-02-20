@@ -1,0 +1,137 @@
+{% extends "base.html" %}
+
+{% block title %}Create Topic - DVIDS Topic Manager{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-7">
+        <!-- Header -->
+        <div class="mb-5">
+            <h1 style="font-size: 2.2rem; margin-bottom: 0.5rem;">
+                <i class="fas fa-plus-circle"></i> Create New Topic
+            </h1>
+            <p style="color: var(--text-secondary); margin: 0; font-size: 1.1rem;">
+                Set up a new monitoring topic with custom keywords
+            </p>
+        </div>
+
+        <!-- Form Card -->
+        <div class="card mb-4">
+            <div class="card-body" style="padding: 2.5rem;">
+                <form method="POST">
+                    <!-- Topic Name -->
+                    <div class="mb-4">
+                        <label for="name" class="form-label">
+                            <i class="fas fa-heading"></i> Topic Name
+                            <span style="color: #ef4444;">*</span>
+                        </label>
+                        <input type="text"
+                               class="form-control form-control-lg"
+                               id="name"
+                               name="name"
+                               placeholder="e.g., Nuclear Weapons Development"
+                               required
+                               style="font-size: 1rem;">
+                        <small style="color: var(--text-secondary);">
+                            A descriptive name for this monitoring topic
+                        </small>
+                    </div>
+
+                    <!-- Keywords -->
+                    <div class="mb-4">
+                        <label for="keywords" class="form-label">
+                            <i class="fas fa-tags"></i> Keywords
+                            <span style="color: #ef4444;">*</span>
+                        </label>
+                        <input type="text"
+                               class="form-control form-control-lg"
+                               id="keywords"
+                               name="keywords"
+                               placeholder="e.g., nuclear, weapons, ICBM, Iran, enrichment"
+                               required
+                               style="font-size: 1rem;">
+                        <small style="color: var(--text-secondary);">
+                            Comma-separated keywords. Items matching ANY keyword will be included (case-insensitive).
+                        </small>
+                    </div>
+
+                    <!-- Score Threshold -->
+                    <div class="mb-4">
+                        <label for="score_threshold" class="form-label">
+                            <i class="fas fa-sliders-h"></i> Alert Threshold
+                        </label>
+                        <div class="input-group input-group-lg">
+                            <input type="number"
+                                   class="form-control"
+                                   id="score_threshold"
+                                   name="score_threshold"
+                                   min="1"
+                                   max="10"
+                                   value="5"
+                                   style="font-size: 1rem;">
+                            <span class="input-group-text" style="background: var(--surface-light); border-color: var(--border);">
+                                / 10
+                            </span>
+                        </div>
+                        <small style="color: var(--text-secondary);">
+                            Only items scoring at or above this threshold will trigger alerts
+                        </small>
+                    </div>
+
+                    <!-- Slack Webhook -->
+                    <div class="mb-5">
+                        <label for="slack_webhook" class="form-label">
+                            <i class="fab fa-slack"></i> Slack Webhook (Optional)
+                        </label>
+                        <input type="url"
+                               class="form-control form-control-lg"
+                               id="slack_webhook"
+                               name="slack_webhook"
+                               placeholder="https://hooks.slack.com/services/..."
+                               style="font-size: 1rem;">
+                        <small style="color: var(--text-secondary);">
+                            Leave blank to disable Slack notifications for this topic.
+                            <a href="https://api.slack.com/messaging/webhooks" target="_blank">
+                                How to get a webhook URL →
+                            </a>
+                        </small>
+                    </div>
+
+                    <!-- Buttons -->
+                    <div class="d-grid gap-3 d-md-flex">
+                        <a href="{{ url_for('index') }}" class="btn btn-outline-secondary btn-lg flex-grow-1">
+                            <i class="fas fa-times"></i> Cancel
+                        </a>
+                        <button type="submit" class="btn btn-primary btn-lg flex-grow-1">
+                            <i class="fas fa-check"></i> Create Topic
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Tips Card -->
+        <div class="card" style="background: rgba(20, 184, 166, 0.05); border-color: var(--primary-light);">
+            <div class="card-body">
+                <h6 class="card-title mb-3" style="color: var(--primary-light); text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600;">
+                    <i class="fas fa-graduation-cap"></i> Tips for Keywords
+                </h6>
+                <ul style="margin: 0; color: var(--text-secondary); font-size: 0.95rem;">
+                    <li style="margin-bottom: 0.75rem;">
+                        <strong style="color: var(--text-primary);">Be specific:</strong> "nuclear weapons Iran" matches more relevant items than just "Iran"
+                    </li>
+                    <li style="margin-bottom: 0.75rem;">
+                        <strong style="color: var(--text-primary);">Use lowercase:</strong> Keywords are matched case-insensitively automatically
+                    </li>
+                    <li style="margin-bottom: 0.75rem;">
+                        <strong style="color: var(--text-primary);">OR logic:</strong> Any item matching ANY keyword will be included in this topic
+                    </li>
+                    <li>
+                        <strong style="color: var(--text-primary);">Multi-topic:</strong> A single item can appear in multiple topics simultaneously
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
