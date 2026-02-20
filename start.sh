@@ -46,31 +46,24 @@ echo "Starting pipeline..."
 echo "======================================="
 echo ""
 
-# Start pipeline in background so it continues after script exits
-# Use setsid to create new process group so it survives shell exit
-setsid bash -c 'timeout 1800 python3 pipeline.py > pipeline.log 2>&1' &
-PIPELINE_PID=$!
+# Start pipeline as a completely detached daemon
+# This allows the script to exit immediately while pipeline continues running
+nohup python3 pipeline.py >> pipeline.log 2>&1 &
 
-if [ $? -eq 0 ]; then
-    echo "✓ Pipeline started (PID: $PIPELINE_PID)"
+# Give it a moment to start
+sleep 2
+
+# Verify it started
+if pgrep -f "python3 pipeline.py" > /dev/null; then
+    echo "✓ Pipeline started successfully"
     echo "✓ Logs: pipeline.log"
+    echo ""
+    echo "Build complete. Pipeline is running in the background."
+
+    # Exit immediately to allow build to complete
+    exit 0
 else
     echo "✗ Failed to start pipeline"
+    echo "Check environment variables and credentials"
     exit 1
 fi
-
-echo ""
-echo "Pipeline is running. Keeping container alive..."
-echo ""
-
-# Keep the container running indefinitely
-# The background pipeline process will continue to run independently
-while true; do
-    sleep 60
-    # Optionally check if pipeline is still running
-    if ! kill -0 $PIPELINE_PID 2>/dev/null; then
-        echo "⚠ Warning: Pipeline process exited. Restarting..."
-        setsid bash -c 'timeout 1800 python3 pipeline.py > pipeline.log 2>&1' &
-        PIPELINE_PID=$!
-    fi
-done
