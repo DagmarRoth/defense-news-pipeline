@@ -20,14 +20,15 @@ def _get_sheets_client():
         if SHEETS_CLIENT is None:
             raise RuntimeError("SHEETS_CLIENT is None in app.py")
         return SHEETS_CLIENT
-    except (ImportError, AttributeError):
+    except (ImportError, AttributeError, RuntimeError):
         # Fallback: initialize directly if running independently
         from pathlib import Path
 
         credentials_file = Path('credentials/google_service_account.json')
-        if credentials_file.exists():
-            return gspread.service_account(filename=str(credentials_file))
-        raise RuntimeError("Google credentials not found")
+        if not credentials_file.exists():
+            raise RuntimeError("Google credentials not found at credentials/google_service_account.json")
+
+        return gspread.service_account(filename=str(credentials_file))
 
 
 def _get_topics_worksheet():
@@ -36,21 +37,26 @@ def _get_topics_worksheet():
     spreadsheet_id = os.getenv('GOOGLE_SHEETS_SPREADSHEET_ID')
 
     if not spreadsheet_id:
-        raise RuntimeError("GOOGLE_SHEETS_SPREADSHEET_ID environment variable not set")
+        raise RuntimeError("GOOGLE_SHEETS_SPREADSHEET_ID environment variable not set. Please set it in Railway environment variables.")
 
     try:
         spreadsheet = client.open_by_key(spreadsheet_id)
-    except gspread.SpreadsheetNotFound:
-        raise RuntimeError(f"Spreadsheet {spreadsheet_id} not found")
+    except gspread.SpreadsheetNotFound as e:
+        raise RuntimeError(f"Spreadsheet {spreadsheet_id} not found. Check that GOOGLE_SHEETS_SPREADSHEET_ID is correct and the service account has access.") from e
+    except Exception as e:
+        raise RuntimeError(f"Error accessing spreadsheet: {e}") from e
 
     # Try to get existing Topics worksheet
     try:
         worksheet = spreadsheet.worksheet('Topics')
     except gspread.WorksheetNotFound:
         # Create Topics worksheet with headers
-        worksheet = spreadsheet.add_worksheet('Topics', rows=1000, cols=10)
-        headers = ['ID', 'Name', 'Keywords', 'Sheet_ID', 'Sheet_Name', 'Slack_Webhook', 'Score_Threshold', 'Active', 'Created_At', 'Updated_At']
-        worksheet.append_row(headers)
+        try:
+            worksheet = spreadsheet.add_worksheet('Topics', rows=1000, cols=10)
+            headers = ['ID', 'Name', 'Keywords', 'Sheet_ID', 'Sheet_Name', 'Slack_Webhook', 'Score_Threshold', 'Active', 'Created_At', 'Updated_At']
+            worksheet.append_row(headers)
+        except Exception as e:
+            raise RuntimeError(f"Error creating Topics worksheet: {e}") from e
 
     return worksheet
 
