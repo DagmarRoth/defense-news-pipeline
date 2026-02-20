@@ -6,12 +6,25 @@ Each topic gets its own Google Sheet and optional Slack notifications.
 """
 
 import os
+import base64
 from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
 from datetime import datetime
+from pathlib import Path
 from dotenv import load_dotenv
 
 # Load environment variables
 load_dotenv()
+
+# Decode Google Credentials from base64 if provided (Railway deployment)
+CREDS_BASE64 = os.getenv('GOOGLE_CREDENTIALS_BASE64')
+if CREDS_BASE64:
+    try:
+        Path('credentials').mkdir(exist_ok=True)
+        decoded = base64.b64decode(CREDS_BASE64)
+        with open('credentials/google_service_account.json', 'wb') as f:
+            f.write(decoded)
+    except Exception as e:
+        print(f"⚠ Warning: Could not decode Google credentials: {e}")
 
 # Import our modules
 from topic_manager import (
