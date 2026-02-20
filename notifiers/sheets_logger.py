@@ -64,7 +64,7 @@ def get_or_create_sheet(client: gspread.Client, spreadsheet_id: str) -> gspread.
         # Worksheet doesn't exist, create it
         try:
             spreadsheet = client.open_by_key(spreadsheet_id)
-            worksheet = spreadsheet.add_worksheet(title='Defense News', rows='100', cols='9')
+            worksheet = spreadsheet.add_worksheet(title='Defense News', rows=100, cols=9)
 
             # Add headers
             worksheet.append_row(SHEET_HEADERS)
