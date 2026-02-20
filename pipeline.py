@@ -102,7 +102,16 @@ def main():
             print("="*70)
 
             try:
-                # Step 0: Check if topics are configured (helps avoid work during initial startup/build)
+                # Skip work on first iteration (allows build validation to complete)
+                # Start actual work on iteration 2
+                if iteration == 1:
+                    print("\n✓ Pipeline started successfully")
+                    print("  (Skipping work on first iteration to allow build validation)")
+                    print(f"  Will start monitoring topics in {POLL_INTERVAL} seconds...\n")
+                    time.sleep(POLL_INTERVAL)
+                    continue
+
+                # Step 0: Check if topics are configured
                 print("\n0️⃣  Loading active topics...")
                 topics = topic_manager.list_active_topics()
 
