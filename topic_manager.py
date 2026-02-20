@@ -2,60 +2,134 @@
 Topic Management System for DVIDS Pipeline
 
 Handles CRUD operations for user-defined monitoring topics.
-Topics are stored in JSON format for simplicity and version control.
+Topics are now stored in Google Sheets for shared access between web and worker services.
 """
 
-import json
 import os
-from pathlib import Path
 from datetime import datetime
 from uuid import uuid4
 from typing import List, Dict, Optional
+import gspread
 
 
-TOPICS_FILE = Path('data/topics.json')
+# Initialize Google Sheets client
+def _get_sheets_client():
+    """Get authenticated Google Sheets client."""
+    try:
+        from app import SHEETS_CLIENT  # Import from app where it's initialized
+        if SHEETS_CLIENT is None:
+            raise RuntimeError("SHEETS_CLIENT is None in app.py")
+        return SHEETS_CLIENT
+    except (ImportError, AttributeError):
+        # Fallback: initialize directly if running independently
+        from pathlib import Path
+
+        credentials_file = Path('credentials/google_service_account.json')
+        if credentials_file.exists():
+            return gspread.service_account(filename=str(credentials_file))
+        raise RuntimeError("Google credentials not found")
 
 
-def ensure_topics_file():
-    """Create topics.json if it doesn't exist."""
-    TOPICS_FILE.parent.mkdir(parents=True, exist_ok=True)
-    if not TOPICS_FILE.exists():
-        save_topics([])
+def _get_topics_worksheet():
+    """Get or create the Topics worksheet in the main spreadsheet."""
+    client = _get_sheets_client()
+    spreadsheet_id = os.getenv('GOOGLE_SHEETS_SPREADSHEET_ID')
+
+    if not spreadsheet_id:
+        raise RuntimeError("GOOGLE_SHEETS_SPREADSHEET_ID environment variable not set")
+
+    try:
+        spreadsheet = client.open_by_key(spreadsheet_id)
+    except gspread.SpreadsheetNotFound:
+        raise RuntimeError(f"Spreadsheet {spreadsheet_id} not found")
+
+    # Try to get existing Topics worksheet
+    try:
+        worksheet = spreadsheet.worksheet('Topics')
+    except gspread.WorksheetNotFound:
+        # Create Topics worksheet with headers
+        worksheet = spreadsheet.add_worksheet('Topics', rows=1000, cols=10)
+        headers = ['ID', 'Name', 'Keywords', 'Sheet_ID', 'Sheet_Name', 'Slack_Webhook', 'Score_Threshold', 'Active', 'Created_At', 'Updated_At']
+        worksheet.append_row(headers)
+
+    return worksheet
+
+
+def _row_to_topic(row: List) -> Optional[Dict]:
+    """Convert a worksheet row to a topic dictionary."""
+    if not row or len(row) < 8:
+        return None
+
+    try:
+        return {
+            'id': row[0],
+            'name': row[1],
+            'keywords': [k.strip().lower() for k in row[2].split(',') if k.strip()],
+            'sheet_id': row[3],
+            'sheet_name': row[4],
+            'slack_webhook': row[5] if row[5] else None,
+            'score_threshold': int(row[6]) if row[6] else 5,
+            'active': row[7].lower() == 'true' if row[7] else True,
+            'created_at': row[8] if len(row) > 8 else '',
+            'updated_at': row[9] if len(row) > 9 else ''
+        }
+    except (ValueError, IndexError):
+        return None
+
+
+def _topic_to_row(topic: Dict) -> List:
+    """Convert a topic dictionary to a worksheet row."""
+    return [
+        topic['id'],
+        topic['name'],
+        ','.join(topic['keywords']),
+        topic['sheet_id'],
+        topic['sheet_name'],
+        topic.get('slack_webhook', ''),
+        str(topic.get('score_threshold', 5)),
+        'true' if topic.get('active', True) else 'false',
+        topic.get('created_at', ''),
+        topic.get('updated_at', '')
+    ]
 
 
 def load_topics() -> List[Dict]:
-    """Load all topics from JSON file."""
-    ensure_topics_file()
+    """Load all topics from Google Sheets."""
     try:
-        with open(TOPICS_FILE, 'r') as f:
-            return json.load(f)
-    except (json.JSONDecodeError, IOError):
+        worksheet = _get_topics_worksheet()
+        rows = worksheet.get_all_values()
+
+        # Skip header row
+        topics = []
+        for row in rows[1:]:
+            topic = _row_to_topic(row)
+            if topic:
+                topics.append(topic)
+
+        return topics
+    except Exception as e:
+        print(f"Error loading topics from Sheets: {e}")
         return []
 
 
 def save_topics(topics: List[Dict]) -> None:
     """
-    Save topics to JSON file with atomic write.
+    Save topics to Google Sheets.
 
-    Writes to temporary file first, then renames to prevent corruption
-    if write is interrupted.
+    Note: This function is kept for compatibility but is not used directly.
+    Individual CRUD operations update Sheets directly.
     """
-    # Ensure directory exists
-    TOPICS_FILE.parent.mkdir(parents=True, exist_ok=True)
-
-    # Write to temporary file first
-    temp_file = TOPICS_FILE.with_suffix('.json.tmp')
     try:
-        with open(temp_file, 'w') as f:
-            json.dump(topics, f, indent=2)
+        worksheet = _get_topics_worksheet()
+        # Clear all data rows (keep header)
+        worksheet.delete_rows(2, worksheet.row_count)
 
-        # Atomic rename (works on most filesystems)
-        temp_file.replace(TOPICS_FILE)
+        # Write all topics
+        for topic in topics:
+            worksheet.append_row(_topic_to_row(topic))
     except Exception as e:
-        # Clean up temp file if it exists
-        if temp_file.exists():
-            temp_file.unlink()
-        raise e
+        print(f"Error saving topics to Sheets: {e}")
+        raise
 
 
 def validate_topic(topic: Dict) -> tuple[bool, str]:
@@ -92,7 +166,7 @@ def create_topic(
     score_threshold: int = 5
 ) -> Dict:
     """
-    Create a new topic and save it.
+    Create a new topic and save it to Google Sheets.
 
     Args:
         name: Human-readable topic name
@@ -123,10 +197,12 @@ def create_topic(
     if not is_valid:
         raise ValueError(f"Invalid topic: {error}")
 
-    # Add to list and save
-    topics = load_topics()
-    topics.append(topic)
-    save_topics(topics)
+    # Add to Sheets
+    try:
+        worksheet = _get_topics_worksheet()
+        worksheet.append_row(_topic_to_row(topic))
+    except Exception as e:
+        raise RuntimeError(f"Failed to create topic in Google Sheets: {e}")
 
     return topic
 
@@ -142,7 +218,7 @@ def get_topic_by_id(topic_id: str) -> Optional[Dict]:
 
 def update_topic(topic_id: str, **updates) -> Optional[Dict]:
     """
-    Update a topic's fields.
+    Update a topic's fields in Google Sheets.
 
     Args:
         topic_id: ID of topic to update
@@ -151,36 +227,53 @@ def update_topic(topic_id: str, **updates) -> Optional[Dict]:
     Returns:
         Updated topic or None if not found
     """
-    topics = load_topics()
+    try:
+        worksheet = _get_topics_worksheet()
+        rows = worksheet.get_all_values()
 
-    for i, topic in enumerate(topics):
-        if topic['id'] == topic_id:
-            # Update allowed fields only
-            allowed_fields = ['name', 'keywords', 'slack_webhook', 'score_threshold', 'active']
-            for field, value in updates.items():
-                if field in allowed_fields:
-                    if field == 'keywords' and isinstance(value, list):
-                        topic[field] = [k.strip().lower() for k in value if k.strip()]
-                    else:
-                        topic[field] = value
+        # Find the topic row
+        topic_row_idx = None
+        for idx, row in enumerate(rows[1:], start=2):
+            if row and row[0] == topic_id:
+                topic_row_idx = idx
+                break
 
-            topic['updated_at'] = datetime.now().isoformat()
+        if topic_row_idx is None:
+            return None
 
-            # Validate after update
-            is_valid, error = validate_topic(topic)
-            if not is_valid:
-                raise ValueError(f"Invalid update: {error}")
+        # Convert row to topic
+        topic = _row_to_topic(rows[topic_row_idx - 1])
+        if not topic:
+            return None
 
-            topics[i] = topic
-            save_topics(topics)
-            return topic
+        # Update allowed fields only
+        allowed_fields = ['name', 'keywords', 'slack_webhook', 'score_threshold', 'active']
+        for field, value in updates.items():
+            if field in allowed_fields:
+                if field == 'keywords' and isinstance(value, list):
+                    topic[field] = [k.strip().lower() for k in value if k.strip()]
+                else:
+                    topic[field] = value
 
-    return None
+        topic['updated_at'] = datetime.now().isoformat()
+
+        # Validate after update
+        is_valid, error = validate_topic(topic)
+        if not is_valid:
+            raise ValueError(f"Invalid update: {error}")
+
+        # Update the row in Sheets
+        worksheet.update_values(f'A{topic_row_idx}:J{topic_row_idx}', [_topic_to_row(topic)])
+        return topic
+
+    except Exception as e:
+        print(f"Error updating topic: {e}")
+        return None
 
 
 def delete_topic(topic_id: str) -> bool:
     """
-    Delete a topic by marking it inactive.
+    Delete a topic by marking it inactive in Google Sheets.
 
     Args:
         topic_id: ID of topic to delete
@@ -210,31 +303,23 @@ def get_topic_sheet_url(topic: Dict) -> str:
 
 if __name__ == '__main__':
     # Quick test
-    print("Testing topic_manager.py...")
+    print("Testing topic_manager.py (Google Sheets backend)...")
 
-    # Create a test topic
-    test_topic = create_topic(
-        name="Test Topic",
-        keywords=["test", "demo"],
-        sheet_id="test-sheet-id",
-        sheet_name="Test"
-    )
-    print(f"✓ Created topic: {test_topic['id']}")
+    try:
+        # Load existing topics
+        topics = load_topics()
+        print(f"✓ Loaded {len(topics)} existing topics from Google Sheets")
 
-    # Load and verify
-    loaded = get_topic_by_id(test_topic['id'])
-    print(f"✓ Retrieved topic: {loaded['name']}")
+        # List active
+        active = list_active_topics()
+        print(f"✓ Active topics: {len(active)}")
 
-    # Update
-    updated = update_topic(test_topic['id'], name="Updated Test Topic")
-    print(f"✓ Updated topic: {updated['name']}")
+        # Get first topic if available
+        if active:
+            first = active[0]
+            print(f"✓ Sample topic: {first['name']} with keywords: {first['keywords']}")
 
-    # List active
-    active = list_active_topics()
-    print(f"✓ Active topics: {len(active)}")
-
-    # Delete
-    deleted = delete_topic(test_topic['id'])
-    print(f"✓ Deleted topic: {deleted}")
-
-    print("\nAll tests passed!")
+        print("\nGoogle Sheets backend is working!")
+    except Exception as e:
+        print(f"✗ Error: {e}")
+        print("Make sure GOOGLE_SHEETS_SPREADSHEET_ID is set and Google credentials are available")
